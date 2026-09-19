@@ -141,6 +141,8 @@ https://<你的-CPA-域名>/v0/resource/plugins/codex-ticket/settings
 
 ## 开发与测试
 
+后续开发与排障请先阅读 [agent.md — Agent / 维护者工作指南](agent.md)，包含架构导航、安全约束、采票状态解读、已知缺口和提交发布流程。
+
 依赖：Linux、Go **1.26+**（允许自动工具链）、CGO/C 编译器、Python 3；UI 测试需要 Node.js **24+**。Go 依赖锁定 CPA SDK v7.3.8，无本机路径 replace。
 
 ```bash
