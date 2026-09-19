@@ -1,0 +1,10 @@
+{
+  "name": "cpa-plugin-codex-ticket-ui-tests",
+  "version": "0.2.0",
+  "private": true,
+  "description": "Development-only tests for the embedded Codex Ticket settings page",
+  "license": "MIT",
+  "scripts": { "test": "node internal/ticket/ui.browser.test.cjs" },
+  "devDependencies": { "jsdom": "30.1.0" },
+  "engines": { "node": ">=24" }
+}

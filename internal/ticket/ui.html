@@ -1,0 +1,199 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="referrer" content="no-referrer">
+<title>Codex 采票代理</title>
+<style>
+:root{color-scheme:light;--bg:#f4f6fa;--ink:#182537;--muted:#536379;--line:#dbe2ec;--accent:#215acb;--good:#12664b;--warn:#875713;--bad:#a52b34}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.65 system-ui,-apple-system,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif}main{max-width:1120px;margin:auto;padding:30px 22px 42px}h1{font-size:28px;line-height:1.3;margin:5px 0 9px;letter-spacing:-.6px}h2{font-size:18px;margin:0 0 14px}p{margin:8px 0}.muted,small{color:var(--muted)}.eyebrow{font-size:12px;font-weight:700;letter-spacing:1.5px;color:var(--accent)}.top,.row{display:flex;gap:12px;align-items:center;flex-wrap:wrap}.top{justify-content:space-between;margin-bottom:20px}.card{background:white;border:1px solid var(--line);border-radius:14px;padding:22px;min-width:0}.grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:18px}.full{grid-column:1/-1}.badge{display:inline-flex;align-items:center;gap:6px;border-radius:99px;padding:4px 12px;background:#eaf0f9;color:var(--muted);font-size:13px;max-width:100%;overflow-wrap:anywhere}.badge.good{background:#e3f4ec;color:var(--good)}.notice{background:#fff7e8;border:1px solid #ecd9ae;color:var(--warn);border-radius:10px;padding:12px 15px}.notice.danger{background:#fff0f1;border-color:#efc7cd;color:var(--bad)}#message{min-height:28px;margin:12px 0 0;font-size:14px;overflow-wrap:anywhere}#message[data-tone="error"]{color:var(--bad)}#message[data-tone="success"]{color:var(--good)}label{display:block;font-weight:600;margin:12px 0 6px}input[type=password],input[type=text],select{width:100%;min-width:0;max-width:100%;padding:11px 12px;border:1px solid #b8c5d6;background:white;color:var(--ink);border-radius:8px;font:inherit}input:disabled,select:disabled{background:#f3f5f8;color:var(--muted)}input:focus-visible,select:focus-visible,button:focus-visible{outline:3px solid #9ebcf5;outline-offset:2px}button{border:1px solid #b8c5d6;background:white;color:var(--ink);border-radius:8px;font:inherit;font-weight:600;padding:9px 15px;cursor:pointer;max-width:100%}button.primary{background:var(--accent);border-color:var(--accent);color:white}button:disabled{opacity:.48;cursor:not-allowed}form{margin:0}.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}.help{font-size:13px;color:var(--muted);margin-top:8px;overflow-wrap:anywhere}.choice{display:flex;gap:20px;flex-wrap:wrap}.choice label,.check{display:flex;gap:8px;align-items:center;font-size:14px;font-weight:500}.choice input,.check input{accent-color:var(--accent);width:17px;height:17px;flex-shrink:0}.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:16px 0}.stat{background:#f5f8fc;border:1px solid #e1e7f0;border-radius:10px;padding:12px}.stat span{font-size:13px;color:var(--muted);display:block}.stat strong{font-size:22px;display:block;margin-top:3px}.details{font-size:13px;color:var(--muted);overflow-wrap:anywhere}.details p{margin:5px 0}#currentProxy{overflow-wrap:anywhere;font-size:14px;background:#f5f8fc;padding:10px 12px;border-radius:8px}table{border-collapse:collapse;width:100%;table-layout:fixed;font-size:13px}th,td{text-align:left;padding:11px 8px;border-bottom:1px solid var(--line);vertical-align:top;overflow-wrap:anywhere}th{color:var(--muted);font-weight:600;background:#f8fafc}th:first-child{width:17%}th:nth-child(2){width:17%}th:nth-child(6){width:23%}.empty{text-align:center;color:var(--muted);padding:28px}footer{margin-top:22px;font-size:12px;color:var(--muted)}[hidden]{display:none!important}code{font-family:ui-monospace,monospace;font-size:12px;overflow-wrap:anywhere}noscript{display:block;padding:20px;background:#fff0f1}
+@media(max-width:720px){main{padding:20px 14px}.grid{grid-template-columns:1fr}.card{padding:17px}.stats{gap:7px}.stat{padding:10px 8px}.stat strong{font-size:19px}h1{font-size:25px}thead{display:none}table,tbody,tr,td{display:block;width:100%}tr{padding:9px 0;border-bottom:1px solid var(--line)}td{display:grid;grid-template-columns:90px minmax(0,1fr);gap:10px;padding:5px 0;border:0}td::before{content:attr(data-label);color:var(--muted)}td.empty{display:block}td.empty::before{content:none}.top{align-items:flex-start}.actions button{flex:1 1 auto}}
+</style>
+</head>
+<body>
+<noscript>请启用 JavaScript；本页仅通过同源管理接口访问插件数据。</noscript>
+<main>
+<header class="top"><div><div class="eyebrow">CPA · PLUGIN 0.2.0</div><h1>Codex 采票代理</h1><p class="muted">管理采票专用代理，查看候选票据与注入状态。</p></div><span id="connection" class="badge">未连接</span></header>
+<div class="notice">实验性功能 · 不保证完整质量或票据可用性。仅支持 HTTP / SSE，不支持 WebSocket。代理连通不等于采票成功。</div>
+<div id="transportWarning" class="notice danger" hidden>已阻止不安全连接。请使用 HTTPS，或通过 SSH 隧道从 localhost / 127.0.0.1 / ::1 打开本页；不要在远程 HTTP 页面输入管理密钥。</div>
+<div id="message" role="status" aria-live="polite"></div>
+<section class="card" aria-labelledby="loginTitle">
+<h2 id="loginTitle">管理连接</h2>
+<form id="loginForm" autocomplete="off">
+<label for="managementKey">CPA MANAGEMENT 管理密钥</label>
+<input id="managementKey" type="password" autocomplete="off" spellcheck="false" autocapitalize="none" placeholder="输入管理密钥，仅保留在本页内存" aria-describedby="keyHelp">
+<p id="keyHelp" class="help">不是账号 API Key。密钥不写入本地存储、Cookie 或 URL，也不会读取其他面板的凭据。刷新页面或断开连接后需重新输入。</p>
+<div class="actions"><button id="connect" class="primary" type="submit">连接</button><button id="disconnect" type="button" disabled>断开连接</button><button id="reload" type="button" disabled>刷新状态</button></div>
+</form>
+</section>
+<div class="grid">
+<section class="card" aria-labelledby="proxyTitle">
+<h2 id="proxyTitle">采票专用代理</h2>
+<p id="currentProxy">连接后查看已保存的代理配置。</p>
+<form id="proxyForm" autocomplete="off">
+<div class="choice" role="group" aria-label="代理模式"><label><input type="radio" name="proxyMode" value="custom" checked disabled>自定义代理</label><label><input type="radio" name="proxyMode" value="core" disabled>选择 CPA 核心代理</label></div>
+<div id="customPanel"><label for="proxyURL">完整代理 URL</label><input id="proxyURL" type="password" autocomplete="new-password" spellcheck="false" autocapitalize="none" placeholder="socks5h://用户名:密码@主机:1080" disabled aria-describedby="proxyHelp"><label class="check"><input id="showProxy" type="checkbox" disabled>临时显示输入内容</label><p id="proxyHelp" class="help">支持 HTTP、HTTPS、SOCKS5、SOCKS5h。例如 <code>http://host:8080</code>、<code>https://host:8443</code>、<code>socks5://host:1080</code>、<code>socks5h://host:1080</code>。已配置自定义代理时留空表示不变；从核心代理切换时必须填写。保存成功后清空输入，不回填已存 URL 或密码。</p></div>
+<div id="corePanel" hidden><label for="coreProxy">可用核心代理</label><select id="coreProxy" disabled><option value="">连接后加载</option></select><p class="help">引用 CPA 全局、账号或配置中的代理。这里只改变插件采票出口，不修改 CPA 核心业务代理。</p></div>
+<div class="actions"><button id="saveProxy" class="primary" type="submit" disabled>保存并立即生效</button><button id="testProxy" type="button" disabled>测试已保存代理</button></div>
+<p class="help">保存后立即影响后续采票。测试使用已保存的代理访问固定 ChatGPT HTTPS 目标，不携带账号凭据；测试不会保存未提交的输入。</p>
+<p id="testResult" class="details" role="status" aria-live="polite">尚未测试。</p>
+</form>
+</section>
+<section class="card" aria-labelledby="statusTitle">
+<h2 id="statusTitle">运行状态</h2>
+<div class="stats"><div class="stat"><span>缓存票据</span><strong id="cachedCount">—</strong></div><div class="stat"><span>采票状态</span><strong id="harvestActive">—</strong></div><div class="stat"><span>注入状态</span><strong id="injectActive">—</strong></div></div>
+<div class="details"><p>采票：<span id="harvestReason">等待连接</span></p><p>注入：<span id="injectReason">等待连接</span></p><p>最近工作状态：<span id="workerReason">等待连接</span></p><p>进行中：<span id="inflightCount">—</span> · 请求追踪：<span id="trackedRequests">—</span></p><p>最近刷新：<span id="updatedAt">—</span></p></div>
+<div class="actions"><button id="refresh" type="button" disabled>请求立即采票</button><button id="pause" type="button" disabled>暂停</button><button id="resume" type="button" disabled>恢复</button></div>
+<p class="help">手动刷新，不自动轮询。「请求立即采票」保留失败退避策略；恢复操作不会绕过插件开关、代理或安全检查。HTTP 状态、长度与缓存数量均不是质量保证。</p>
+</section>
+<section class="card full" aria-labelledby="entriesTitle"><h2 id="entriesTitle">票据缓存明细</h2><table><thead><tr><th scope="col">账号索引</th><th scope="col">模型</th><th scope="col">剩余秒数</th><th scope="col">最近 HTTP</th><th scope="col">最近长度</th><th scope="col">状态 / 原因</th><th scope="col">注入次数</th></tr></thead><tbody id="entries"><tr><td class="empty" colspan="7">连接后查看；本页不展示票据或账号凭据。</td></tr></tbody></table></section>
+</div>
+<footer>公开页面仅为静态界面。所有状态、代理选项与操作均通过同源管理接口鉴权；断开连接只清除本页会话，不会暂停服务端采票。</footer>
+</main>
+<script>
+'use strict';
+(() => {
+  const $ = id => document.getElementById(id);
+  const paths = Object.freeze({status:'/v0/management/codex-ticket/status',options:'/v0/management/codex-ticket/proxy-options',proxy:'/v0/management/codex-ticket/proxy',test:'/v0/management/codex-ticket/proxy-test',refresh:'/v0/management/codex-ticket/refresh',pause:'/v0/management/codex-ticket/pause',resume:'/v0/management/codex-ticket/resume'});
+  const secure = location.protocol === 'https:' || (location.protocol === 'http:' && ['localhost','127.0.0.1','::1','[::1]'].includes(location.hostname));
+  let key = '', connected = false, busy = false, generation = 0, current = null, options = [];
+  const controllers = new Set();
+  const reasons = Object.freeze({proxy_discovery_partial:'代理选项仅部分加载（账号最多展示256项），核心全局选择不受影响',proxy_committed_durability_uncertain:'配置已提交但落盘确认失败，请刷新检查并检查磁盘',selected_proxy_unavailable:'所选核心代理已失效，请刷新并重新选择',proxy_required:'请填写完整代理 URL',proxy_storage_unavailable:'无法保存代理配置，请检查私有目录与磁盘',proxy_storage_permissions:'代理配置目录或文件权限不安全',auth_limit:'账号数量超过安全上限',test_rate_limited:'代理测试过于频繁，请稍后重试',http_407:'代理要求认证，请检查代理凭据',http_500:'目标服务返回错误',http_502:'目标网关返回错误',http_503:'目标服务暂不可用',http_504:'目标网关超时',ready:'已就绪',configured:'配置已加载',disabled:'插件未启用',host_disabled:'CPA 未启用此插件',harvest_disabled:'采票开关未启用',inject_disabled:'注入开关未启用',log_unsafe:'日志安全检查未通过，已停止注入；需确认 commercial-mode',host_config_unavailable:'无法读取 CPA 配置',host_config_invalid:'CPA 配置无效',config_invalid:'插件配置无效',schema_invalid:'配置版本不兼容',quiesced:'工作器已暂停',paused:'已暂停',proxy_invalid:'代理格式或协议无效',proxy_unavailable:'代理未配置或无法读取',proxy_not_configured:'尚未配置代理',proxy_missing:'尚未配置代理',proxy_ref_missing:'请选择有效的核心代理',proxy_ref_not_found:'所选核心代理已失效，请刷新选项',core_proxy_not_found:'所选核心代理不存在',proxy_context_unsupported:'代理不支持请求取消',proxy_mode_invalid:'代理模式无效',proxy_url_required:'请填写完整代理 URL',proxy_ref_required:'请选择核心代理',proxy_write_failed:'代理配置保存失败，请检查服务端权限',file_unavailable:'配置文件不可用',file_invalid:'配置文件无效',file_permissions:'配置文件权限不安全',transport_error:'网络连接失败，请检查代理',timeout:'请求超时，请稍后刷新确认',canceled:'操作已取消',request_invalid:'请求参数无效',invalid_request:'请求参数无效',invalid_json:'请求格式无效',not_found:'管理接口不可用，请确认插件版本',method_not_allowed:'接口不支持此操作',query_not_supported:'管理接口不接受查询参数',credential_unknown:'账号凭据不可用',identity_changed:'账号身份已变化，已丢弃结果',identity_conflict:'账号身份冲突',api_key_skipped:'已跳过 API Key 账号',http_status:'上游 HTTP 状态未满足采票条件',length_mismatch:'返回长度不符合候选票据条件',prefix_mismatch:'返回前缀不符合候选票据条件',header_invalid:'响应头无效',candidate_cached:'候选票据已缓存（不保证质量）',random_unavailable:'随机源不可用',scan_requested_backoff_preserved:'已请求采票，保留失败退避',reachable:'代理目标可达',unreachable:'代理目标不可达',proxy_test_failed:'代理连通性测试失败',unauthorized:'登录已过期或管理密钥无效，请重新连接',forbidden:'管理接口拒绝访问，请检查管理权限',rate_limited:'请求过于频繁，请稍后重试'});
+  const explain = reason => typeof reason === 'string' && Object.hasOwn(reasons, reason) ? reasons[reason] : reason ? '未识别的状态，请检查服务端配置' : '暂无';
+  const count = value => typeof value === 'number' && Number.isFinite(value) && value >= 0 ? String(Math.floor(value)) : '—';
+  const text = (id, value) => { $(id).textContent = value; };
+  function notice(message, tone = '') { text('message', message); $('message').dataset.tone = tone; }
+  function mode() { return document.querySelector('input[name="proxyMode"]:checked').value; }
+  function controls() {
+    $('connect').disabled = !secure || busy || connected;
+    $('managementKey').disabled = !secure || busy || connected;
+    $('disconnect').disabled = !key && !connected;
+    for (const id of ['reload','refresh','pause','resume','proxyURL','showProxy','saveProxy','coreProxy']) $(id).disabled = !secure || !connected || busy;
+    $('testProxy').disabled = !secure || !connected || busy || !current || !current.configured;
+    document.querySelectorAll('input[name="proxyMode"]').forEach(el => { el.disabled = !secure || !connected || busy; });
+    text('connection', busy ? '正在处理…' : connected ? '已连接 · 仅本页内存' : '未连接');
+    $('connection').className = connected ? 'badge good' : 'badge';
+  }
+  function panels() { $('customPanel').hidden = mode() !== 'custom'; $('corePanel').hidden = mode() !== 'core'; }
+  function clearURL() { $('proxyURL').value = ''; $('proxyURL').type = 'password'; $('showProxy').checked = false; }
+  function emptyTable(message) {
+    const tr = document.createElement('tr'), td = document.createElement('td'); td.colSpan = 7; td.className = 'empty'; td.textContent = message; tr.append(td); $('entries').replaceChildren(tr);
+  }
+  function logout(message = '已断开连接，本页密钥与代理输入已清除。') {
+    generation++; controllers.forEach(c => c.abort()); controllers.clear(); key = ''; connected = false; busy = false; current = null; options = [];
+    $('managementKey').value = ''; clearURL(); $('coreProxy').replaceChildren(new Option('连接后加载',''));
+    document.querySelector('input[name="proxyMode"][value="custom"]').checked = true; panels();
+    for (const id of ['cachedCount','harvestActive','injectActive','inflightCount','trackedRequests','updatedAt']) text(id,'—');
+    for (const id of ['harvestReason','injectReason','workerReason']) text(id,'等待连接');
+    text('currentProxy','连接后查看已保存的代理配置。'); text('testResult','尚未测试。'); emptyTable('连接后查看；本页不展示票据或账号凭据。'); notice(message); controls();
+  }
+  async function api(name, method = 'GET', body) {
+    if (!secure || !key || !Object.hasOwn(paths,name)) throw new Error('forbidden');
+    const started = generation, controller = new AbortController(); controllers.add(controller);
+    const timer = setTimeout(() => controller.abort(),30000);
+    try {
+      const headers = {Authorization:'Bearer ' + key, Accept:'application/json'};
+      if (body !== undefined) headers['Content-Type'] = 'application/json';
+      const response = await fetch(paths[name],{method,headers,body:body === undefined ? undefined : JSON.stringify(body),credentials:'omit',redirect:'error',cache:'no-store',referrerPolicy:'no-referrer',signal:controller.signal});
+      if (started !== generation) throw new Error('stale');
+      if (response.status === 401) { logout(explain('unauthorized')); $('message').dataset.tone = 'error'; throw new Error('stale'); }
+      let data; try { data = await response.json(); } catch { throw new Error(response.ok ? 'invalid_response' : response.status === 403 ? 'forbidden' : 'request_failed'); }
+      if (started !== generation) throw new Error('stale');
+      if (!response.ok) throw new Error(response.status === 403 ? 'forbidden' : response.status === 429 ? 'rate_limited' : data && typeof data.reason === 'string' && Object.hasOwn(reasons,data.reason) ? data.reason : 'request_failed');
+      if (!data || typeof data !== 'object' || Array.isArray(data)) throw new Error('invalid_response');
+      return data;
+    } catch(error) {
+      if (started !== generation) throw new Error('stale');
+      if (error.name === 'AbortError') throw new Error('timeout');
+      if (error instanceof TypeError) throw new Error('transport_error');
+      throw error;
+    } finally { clearTimeout(timer); controllers.delete(controller); }
+  }
+  async function run(task) {
+    if (busy) return; const started = generation; busy = true; controls(); notice('正在处理…');
+    try { await task(); }
+    catch(error) {
+      if (started === generation && error.message !== 'stale') notice(Object.hasOwn(reasons,error.message) ? explain(error.message) : '操作失败或响应格式不正确，请刷新重试；未显示服务端原始错误。','error');
+    } finally { if (started === generation) { busy = false; controls(); } }
+  }
+  function renderStatus(data) {
+    text('cachedCount',count(data.cached_count)); text('harvestActive',data.harvest_active === true ? '运行中' : '未运行'); text('injectActive',data.inject_active === true ? '运行中' : '未运行');
+    text('harvestReason',explain(data.harvest_reason)); text('injectReason',explain(data.inject_reason)); text('workerReason',explain(data.worker_reason)); text('inflightCount',count(data.inflight_count)); text('trackedRequests',count(data.tracked_requests)); text('updatedAt',new Date().toLocaleTimeString('zh-CN'));
+    const rows = Array.isArray(data.entries) ? data.entries : [];
+    if (!rows.length) { emptyTable('暂无候选票据。请检查代理、插件开关与上方状态原因。'); return; }
+    const fragment = document.createDocumentFragment();
+    for (const row of rows) {
+      if (!row || typeof row !== 'object') continue;
+      const tr = document.createElement('tr');
+      const cells = [['账号索引',typeof row.auth_index === 'string' ? row.auth_index : '—'],['模型',typeof row.model === 'string' ? row.model : '—'],['剩余秒数',count(row.remaining_seconds)],['最近 HTTP',count(row.last_http)],['最近长度',count(row.last_length)],['状态 / 原因',explain(row.reason)],['注入次数',count(row.injected_count)]];
+      for (const [label,value] of cells) { const td = document.createElement('td'); td.dataset.label = label; td.textContent = value; tr.append(td); }
+      fragment.append(tr);
+    }
+    $('entries').replaceChildren(fragment);
+  }
+  // Only display the server's credential-free endpoint format. Never reflect a raw URL/error.
+  function safeLabel(label) {
+    if (typeof label !== 'string') return '代理已配置（地址已隐藏）';
+    return /^(?:https?|socks5h?):\/\/(?:\[[a-fA-F0-9:]+\]|[a-zA-Z0-9.-]+)(?::[0-9]{1,5})?(?: \(已配置认证\)|（已配置认证）)?$/.test(label) ? label : '代理已配置（地址已隐藏）';
+  }
+  function renderCurrent(value) {
+    current = value && typeof value === 'object' ? value : null;
+    if (!current) { text('currentProxy','代理状态不可用，请刷新。'); return; }
+    text('currentProxy',(current.mode === 'core' ? '核心代理 · ' : '自定义代理 · ') + (current.configured ? safeLabel(current.label) : '尚未配置') + (current.reason ? ' · ' + explain(current.reason) : ''));
+  }
+  async function loadOptions(resetMode = false) {
+    const data = await api('options'); renderCurrent(data.current);
+    options = Array.isArray(data.options) ? data.options.filter(item => item && typeof item.id === 'string' && item.id.length > 0) : [];
+    const selected = resetMode && current ? current.ref : $('coreProxy').value;
+    const fragment = document.createDocumentFragment(); fragment.append(new Option(options.length ? '请选择核心代理' : '暂无可用核心代理',''));
+    const sources = {global:'CPA 全局',account:'账号代理',config:'配置代理'};
+    for (const option of options) {
+      const source = Object.hasOwn(sources,option.source) ? sources[option.source] : '核心代理';
+      const parts = typeof option.label === 'string' ? option.label.split(' · ') : [];
+      const title = parts.length === 2 && /^[\p{L}\p{N} _./-]{1,160}$/u.test(parts[0]) ? parts[0] : source;
+      fragment.append(new Option(title + ' · ' + safeLabel(parts.at(-1)),option.id));
+    }
+    if (data.discovery_reason) { const hint=document.createElement('option'); hint.disabled=true; hint.textContent=explain(data.discovery_reason); fragment.append(hint); }
+    $('coreProxy').replaceChildren(fragment);
+    if (options.some(item => item.id === selected)) $('coreProxy').value = selected;
+    if (resetMode && current && ['custom','core'].includes(current.mode)) document.querySelector('input[name="proxyMode"][value="' + current.mode + '"]').checked = true;
+    panels();
+  }
+  $('loginForm').addEventListener('submit',event => {
+    event.preventDefault(); if (!secure || busy || connected) return;
+    if (!$('managementKey').value.trim()) { notice('请先输入 CPA MANAGEMENT 管理密钥。','error'); return; }
+    key = $('managementKey').value.trim(); $('managementKey').value = '';
+    run(async () => { const status = await api('status'); connected = true; renderStatus(status); await loadOptions(true); notice('已连接。管理密钥仅保留在本页内存。','success'); });
+  });
+  $('disconnect').addEventListener('click',() => logout());
+  $('reload').addEventListener('click',() => run(async () => { renderStatus(await api('status')); await loadOptions(false); notice('状态与代理选项已刷新。','success'); }));
+  document.querySelectorAll('input[name="proxyMode"]').forEach(el => el.addEventListener('change',panels));
+  $('showProxy').addEventListener('change',() => { $('proxyURL').type = $('showProxy').checked ? 'text' : 'password'; });
+  $('proxyForm').addEventListener('submit',event => {
+    event.preventDefault(); if (!secure || !connected || busy) return;
+    let payload;
+    if (mode() === 'custom') {
+      const url = $('proxyURL').value.trim();
+      if (!url && !(current && current.mode === 'custom' && current.configured)) { notice('请填写完整代理 URL；仅已配置的自定义代理可以留空保持不变。','error'); return; }
+      if (url) { try { const parsed = new URL(url); if (!['http:','https:','socks5:','socks5h:'].includes(parsed.protocol) || !parsed.hostname || parsed.search || parsed.hash || (parsed.pathname && parsed.pathname !== '/')) throw new Error(); } catch { notice('代理 URL 无效。请填写 HTTP、HTTPS、SOCKS5 或 SOCKS5h 完整地址，不含查询参数、片段或路径。','error'); return; } }
+      payload = {mode:'custom',url};
+    } else {
+      const ref = $('coreProxy').value;
+      if (!options.some(item => item.id === ref)) { notice('请选择一个可用核心代理。','error'); return; }
+      payload = {mode:'core',ref};
+    }
+    run(async () => { const result = await api('proxy','POST',payload); clearURL(); renderCurrent(result.current || result); text('testResult','代理配置已变化，请重新测试。'); await loadOptions(true); if (!current || !current.configured || current.mode !== payload.mode || (payload.mode === 'core' && current.ref !== payload.ref)) { notice('保存请求已提交，但重新读取的配置未确认生效。请刷新检查。','error'); return; } notice('代理已保存并重新读取确认；立即用于后续采票，不改变 CPA 核心业务代理。','success'); });
+  });
+  $('testProxy').addEventListener('click',() => run(async () => {
+    text('testResult','正在测试已保存的代理…');
+    try { const result = await api('test','POST'); text('testResult',(result.ok === true ? '目标可达' : '测试未通过') + ' · HTTP ' + count(result.http_status) + ' · ' + count(result.latency_ms) + ' ms · ' + explain(result.reason) + '。仅说明网络连通性，不代表获得可用票据。'); notice('代理测试已完成。',result.ok === true ? 'success' : 'error'); }
+    catch(error) { text('testResult','测试未完成，请查看上方提示。'); throw error; }
+  }));
+  for (const name of ['refresh','pause','resume']) $(name).addEventListener('click',() => run(async () => { await api(name,'POST'); renderStatus(await api('status')); notice(name === 'refresh' ? explain('scan_requested_backoff_preserved') : name === 'pause' ? '已暂停，状态已刷新。' : '已请求恢复，实际运行状态以上方安全检查结果为准。','success'); }));
+  window.addEventListener('pagehide',() => logout(''));
+  $('transportWarning').hidden = secure; controls();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,14 @@
+This is an independently implemented experimental plugin, not an official
+OpenAI, CLIProxyAPI or Sub2API release. Sub2API source was reviewed for behavior;
+its LGPL implementation was not copied into this project.
+
+C ABI adapter patterns and SDK interfaces derive from CLIProxyAPI's MIT examples.
+CLIProxyAPI notices:
+Copyright (c) 2025-2005.9 Luis Pater
+Copyright (c) 2025.9-present Router-For.ME
+
+CLIProxyAPI is distributed under the MIT permission and warranty terms provided
+in LICENSE. Its pinned SDK source remains governed by that upstream license.
+
+Project repository: https://github.com/Su-cyber-art/cpa-plugin-codex-ticket
+The plugin is independently maintained and is not an official upstream release.
